@@ -1,0 +1,17 @@
+__pycache__/
+local_settings.py
+.env
+env/
+venv/
+.idea
+test.py
+db_bot.db
+.venv
+.env.*
+*.log
+*.pdf
+docker-compose.yml
+Dockerfile
+.sh
+.coverage
+.test.env
