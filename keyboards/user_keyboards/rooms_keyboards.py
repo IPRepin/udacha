@@ -1,13 +1,22 @@
+from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from data.rooms_data import get_all_rooms
 
 
-async def rooms_menu() -> InlineKeyboardBuilder:
+class RoomsKeyboards(CallbackData, prefix="show_room"):
+    action: str
+
+
+async def add_rooms_menu(session: AsyncSession) -> InlineKeyboardBuilder:
     menu = InlineKeyboardBuilder()
-    menu.row(InlineKeyboardButton(text="Апартаменты 2х этажные с кухней", callback_data="apart_2_etaja"))
-    menu.row(InlineKeyboardButton(text="Семейный 2х комнатный номер", callback_data="family_2_rooms"))
-    menu.row(InlineKeyboardButton(text="Семейный 5,6ти местный номер", callback_data="family_5-6_4_places"))
-    menu.row(InlineKeyboardButton(text="4х местный номер", callback_data="4_places"))
-    menu.row(InlineKeyboardButton(text="3х местный номер", callback_data="3_places"))
-    menu.row(InlineKeyboardButton(text="2х местный номер Комфорт", callback_data="2_places_comfort"))
-    menu.row(InlineKeyboardButton(text="2х местный номер без балкона", callback_data="2_places"))
+    rooms = await get_all_rooms(session=session)
+    for room in rooms:
+        btn_text = room.name
+        id_room = room.id  # Получение id номера
+        callback_data = RoomsKeyboards(action=str(id_room)).pack()
+        menu.row(
+            InlineKeyboardButton(text=btn_text, callback_data=callback_data)
+        )
     return menu.as_markup()

@@ -6,8 +6,7 @@ metadata = MetaData()
 
 
 class BaseModelBot(DeclarativeBase):
-    created_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+    pass
 
 
 class Room(BaseModelBot):
@@ -24,3 +23,15 @@ class User(BaseModelBot):
     user_first_name: Mapped[str] = mapped_column(String(150), nullable=False)
     user_id: Mapped[BigInteger] = mapped_column(BigInteger, nullable=False, unique=True)
     user_url: Mapped[str] = mapped_column(String(150))
+    booking_confirmation: Mapped[str] = mapped_column(String(150), nullable=False, default="❌Не подтверждено")
+
+
+class Booking(BaseModelBot):
+    __tablename__ = "Bookings"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[BigInteger] = mapped_column(BigInteger, nullable=False, unique=True)
+    user_first_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    room: Mapped[str] = mapped_column(String(150), nullable=False)
+    check_in_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    departure_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
+    status: Mapped[str] = mapped_column(String(150))

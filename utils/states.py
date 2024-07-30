@@ -8,4 +8,10 @@ class BookRoomState(StatesGroup):
     room = State()
 
 
+class AddRoomsState(StatesGroup):
+    title = State()
+    description = State()
+    photo = State()
+
+
 

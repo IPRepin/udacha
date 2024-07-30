@@ -2,4 +2,8 @@ aiogram==3.3.0
 alembic==1.13.1
 redis==5.0.3
 ruff==0.4.5
-aiogram-calendar
+aiogram-calendar==0.5.0
+aiosqlite==0.20.0
+SQLAlchemy~=2.0.30
+urllib3~=2.0.7
+pydantic~=2.5.3
