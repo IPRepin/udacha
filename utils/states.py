@@ -14,4 +14,6 @@ class AddRoomsState(StatesGroup):
     photo = State()
 
 
+class UserIdState(StatesGroup):
+    USER_ID = State()
 

@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import settings
 from data.sqlite_connect import create_db, session_factory
+from handlers.admin_handler.booking_admin_handler import booking_admin_router
 from handlers.admin_handler.rooms_handler import admin_room_router
 from handlers.user_handler.about_udacha_handlers import about_router
 
@@ -31,6 +32,7 @@ async def connect_bot():
         user_handlers_router,
         about_router,
         admin_room_router,
+        booking_admin_router,
     )
     dp.update.middleware(DataBaseMiddleware(session_pool=session_factory))
     await create_db()

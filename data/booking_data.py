@@ -13,22 +13,31 @@ logger = logging.getLogger(__name__)
 
 async def add_booking(
         session: AsyncSession,
-        message: types.Message,
+        user_id: str,
+        first_name: str,
+        user_url: str,
+        room: str,
+        guests: str,
+        check_in_date: str,
+        departure_date: str,
+        status: str = "❌Не подтверждено"
 ):
     """Создание нового бронирования"""
     try:
         session.add(Booking(
-            user_first_name=message.text,
-            user_id=message.text,
-            room=message.text,
-            check_in_date=message.text,
-            departure_date=message.text,
-            status=message.text
+            user_first_name=first_name,
+            user_id=user_id,
+            user_url=user_url,
+            guests=guests,
+            room=room,
+            check_in_date=check_in_date,
+            departure_date=departure_date,
+            status=status
         ))
         await session.commit()
-        logger.info(f"Бронирование добавлено {message.from_user.first_name} добавлено")
+        logger.info(f"Бронирование добавлено")
     except IntegrityError as error:
-        logger.error(f"Бронирование  {message.from_user.first_name} уже существует")
+        logger.error(f"Бронирование уже существует")
         logger.error(error)
         await session.rollback()
 
@@ -47,17 +56,18 @@ async def get_all_booking_by_user_id(session: AsyncSession, user_id: int):
     return result.scalars().all()
 
 
-async def get_booking_by_user_id(session: AsyncSession, user_id: int):
-    """Получение бронирования по user_id"""
-    query = select(Booking).where(user_id == Booking.user_id)
+async def get_booking_by_params(session: AsyncSession, **kwargs):
+    query = select(Booking)
+    for key, value in kwargs.items():
+        query = query.where(getattr(Booking, key) == value)
     result = await session.execute(query)
     return result.scalars().first()
 
 
-async def update_booking_status(session: AsyncSession, message: types.Message):
+async def update_booking_status(session: AsyncSession, status: str, user_id: Booking):
     """Обновление бронирования"""
-    query = update(Booking).where(Booking.user_id == message.from_user.id).values(
-        status=message.text
+    query = update(Booking).where(Booking.user_id == user_id).values(
+        status=status
     )
     await session.execute(query)
     await session.commit()

@@ -26,7 +26,7 @@ async def add_user(
         logger.info(f"Пользователь {message.from_user.id} добавлен")
     except IntegrityError as error:
         logger.error(f"Пользователь {message.from_user.id} уже существует")
-        logger.error(error)
+        logger.error(error.code)
         await session.rollback()
 
 

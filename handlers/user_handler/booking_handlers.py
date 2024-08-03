@@ -1,3 +1,4 @@
+from data.booking_data import add_booking
 from data.rooms_data import get_room_by_id
 from keyboards.user_keyboards.rooms_keyboards import add_rooms_menu, RoomsKeyboards
 from utils.states import BookRoomState
@@ -54,7 +55,10 @@ async def add_finishing_date(callback_query: types.CallbackQuery, callback_data:
 
 @user_handlers_router.message(BookRoomState.number_guests)
 async def add_number_guests(message: types.Message, state: FSMContext, session: AsyncSession):
-    await state.update_data(number_guests=message.text)
+    await state.update_data(number_guests=message.text,
+                            name=message.from_user.first_name,
+                            user_id=message.from_user.id,
+                            user_url=message.from_user.url)
     await state.set_state(BookRoomState.room)
     await message.answer("Номер для проживания",
                          reply_markup=await add_rooms_menu(session))
@@ -69,9 +73,19 @@ async def select_room(callback_query: types.CallbackQuery,
     await state.update_data(room=room.name)
     data = await state.get_data()
     await state.clear()
-    await callback_query.message.answer(f"{callback_query.message.from_user.first_name} вы выбрали:\n"
+    await callback_query.message.answer(f"{data.get('name')} вы выбрали:\n"
                                         f"Дата заезда: {data.get('start_date')}\n"
                                         f"Дата выезда: {data.get('finish_date')}\n"
                                         f"{data.get('number_guests')} гостей\n"
                                         f"Выбранный номер:  {data.get('room')}")
     await callback_query.answer()
+    await add_booking(
+        session=session,
+        user_id=data.get('user_id'),
+        user_url=data.get('user_url'),
+        first_name=data.get('name'),
+        room=data.get('room'),
+        guests=data.get('number_guests'),
+        check_in_date=data.get('start_date'),
+        departure_date=data.get('finish_date'),
+    )
