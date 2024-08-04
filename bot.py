@@ -9,7 +9,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import settings
 from data.sqlite_connect import create_db, session_factory
 from handlers.admin_handler.booking_admin_handler import booking_admin_router
-from handlers.admin_handler.rooms_handler import admin_room_router
+from handlers.admin_handler.room_handlers.add_rooms_handler import admin_room_router
 from handlers.user_handler.about_udacha_handlers import about_router
 
 from handlers.user_handler.command_handlers import commands_router

@@ -1,4 +1,5 @@
 from aiogram.filters.callback_data import CallbackData
+from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +10,7 @@ class RoomsKeyboards(CallbackData, prefix="show_room"):
     action: str
 
 
-async def add_rooms_menu(session: AsyncSession) -> InlineKeyboardBuilder:
+async def add_rooms_menu(session: AsyncSession) -> InlineKeyboardMarkup:
     menu = InlineKeyboardBuilder()
     rooms = await get_all_rooms(session=session)
     for room in rooms:

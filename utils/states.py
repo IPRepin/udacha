@@ -14,6 +14,13 @@ class AddRoomsState(StatesGroup):
     photo = State()
 
 
+class EditRoomState(StatesGroup):
+    room = State()
+    title = State()
+    description = State()
+    photo = State()
+
+
 class UserIdState(StatesGroup):
     USER_ID = State()
 

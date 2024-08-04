@@ -5,8 +5,8 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.booking_data import get_booking_by_params, update_booking_status
-from keyboards.admin_keyboards.booking_admin_keyboards import get_booking_admin_keyboards, send_user_keyboard
-from keyboards.admin_keyboards.moderation_keyboards import add_moderation_keyboard
+from keyboards.admin_keyboards.booking_admin_keyboards import get_booking_admin_keyboards, send_user_keyboard, \
+    add_moderation_keyboard
 from utils.states import UserIdState
 from utils.texts import moderator_text
 
