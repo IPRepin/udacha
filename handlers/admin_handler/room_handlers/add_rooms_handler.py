@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.rooms_data import add_room
+from keyboards.admin_keyboards.main_admin_keyboards import get_admin_keyboards
 from keyboards.admin_keyboards.rooms_admin_keyboards import get_rooms_button
 from utils.states import AddRoomsState
 
@@ -13,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 @admin_room_router.message(F.text == "Номера")
 async def working_rooms(message: types.Message) -> None:
-    await message.answer("Для добавления, редактирования или"
-                         "удаления номера выберете из слудцющих"
+    await message.answer("Для добавления, редактирования или "
+                         "удаления номера выберете один из слудующих "
                          "пунктов меню:", reply_markup=await get_rooms_button())
 
 
@@ -22,6 +23,7 @@ async def working_rooms(message: types.Message) -> None:
 async def add_new_room(callback: types.CallbackQuery, state: FSMContext) -> None:
     await state.set_state(AddRoomsState.title)
     await callback.message.answer("Напишите название номера")
+    await callback.answer()
 
 
 @admin_room_router.message(AddRoomsState.title)
@@ -44,12 +46,12 @@ async def add_photo_room(message: types.Message, state: FSMContext, session: Asy
     data = await state.get_data()
     await state.clear()
     await add_room(
-        name=data.get("title"),
-        description=data.get("description"),
-        photo=data.get("photo"),
+        title_room=data.get("title"),
+        description_room=data.get("description"),
+        photo_room=data.get("photo"),
         session=session
     )
-    await message.answer(f"Номер {data.get('title')} добавлен!")
+    await message.answer(f"Номер {data.get('title')} добавлен!", reply_markup=await get_admin_keyboards())
 
 
 @admin_room_router.message(~F.photo, AddRoomsState.photo)

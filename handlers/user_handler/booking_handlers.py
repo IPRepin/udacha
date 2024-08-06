@@ -1,5 +1,10 @@
-from data.booking_data import add_booking
+import logging
+
+import sqlalchemy
+
+from data.booking_data import add_booking, get_booking_by_params
 from data.rooms_data import get_room_by_id
+from keyboards.user_keyboards.main_user_keyboards import get_main_keyboards
 from keyboards.user_keyboards.rooms_keyboards import add_rooms_menu, RoomsKeyboards
 from utils.states import BookRoomState
 from aiogram import types, Router, F
@@ -11,6 +16,7 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 user_handlers_router = Router()
+logger = logging.getLogger(__name__)
 
 
 @user_handlers_router.message(F.text == "🐬Забронировать номер")
@@ -19,6 +25,7 @@ async def book_a_room(message: types.Message, state: FSMContext):
                          reply_markup=await DialogCalendar(
                              locale=await get_user_locale(message.from_user)
                          ).start_calendar())
+    logger.info("Старт бронироания")
     await state.set_state(BookRoomState.starting_date)
 
 
@@ -77,15 +84,37 @@ async def select_room(callback_query: types.CallbackQuery,
                                         f"Дата заезда: {data.get('start_date')}\n"
                                         f"Дата выезда: {data.get('finish_date')}\n"
                                         f"{data.get('number_guests')} гостей\n"
-                                        f"Выбранный номер:  {data.get('room')}")
+                                        f"Выбранный номер:  {data.get('room')}",
+                                        reply_markup=await get_main_keyboards())
     await callback_query.answer()
-    await add_booking(
-        session=session,
-        user_id=data.get('user_id'),
-        user_url=data.get('user_url'),
-        first_name=data.get('name'),
-        room=data.get('room'),
-        guests=data.get('number_guests'),
-        check_in_date=data.get('start_date'),
-        departure_date=data.get('finish_date'),
-    )
+    try:
+        await add_booking(
+            session=session,
+            user_id=data.get('user_id'),
+            user_url=data.get('user_url'),
+            first_name=data.get('name'),
+            room=data.get('room'),
+            guests=data.get('number_guests'),
+            check_in_date=data.get('start_date'),
+            departure_date=data.get('finish_date'),
+        )
+        logger.info("Бронированние завершено")
+    except sqlalchemy.exc.IntegrityError:
+        await callback_query.message.answer("Бронирование изменено")
+    # TODO Доработать обновление бронирования
+
+
+@user_handlers_router.message(F.text == "🧳Проверить бронирование")
+async def check_booking(message: types.Message, session: AsyncSession):
+    booking = await get_booking_by_params(session=session, user_id=message.from_user.id)
+    if booking.status == "❌Не подтверждено":
+        await message.answer("Ваше бронирование пока не подтверждено.",
+                             reply_markup=await get_main_keyboards())
+    elif booking.status == "Бронирование подтверждено":
+        await message.answer(f"{message.from_user.first_name} ваше бронирование подтверждено\n"
+                             f"Вы забронировали {booking.room}\n"
+                             f"на {booking.guests} гостей\n"
+                             f"C {booking.check_in_date} по {booking.departure_date}",
+                             reply_markup=await get_main_keyboards())
+    else:
+        await message.answer("Бронирование отклонено", reply_markup=await get_main_keyboards())

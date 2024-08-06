@@ -12,23 +12,22 @@ logger = logging.getLogger(__name__)
 
 
 async def add_room(
-        name: str,
-        description: str,
-        photo: str,
+        title_room: Room.name,
+        description_room: Room.description,
+        photo_room: Room.photo,
         session: AsyncSession,
 ):
     """Добавление нового номера"""
     try:
         session.add(Room(
-            name=name,
-            description=description,
-            photo=photo
+            name=title_room,
+            description=description_room,
+            photo=photo_room
         ))
         await session.commit()
-        logger.info(f"Номер добавлен")
-    except IntegrityError as error:
-        logger.error(f"Номер уже существует")
-        logger.error(error)
+        logger.info("Номер добавлен")
+    except IntegrityError:
+        logger.error("Номер уже существует")
         await session.rollback()
 
 
@@ -46,18 +45,23 @@ async def get_room_by_name(session: AsyncSession, name: str):
     return result.scalars().first()
 
 
-async def get_room_by_id(session: AsyncSession, id: int):
+async def get_room_by_id(session: AsyncSession, id: Room.id):
     """Получение комнаты по name"""
     query = select(Room).where(id == Room.id)
     result = await session.execute(query)
     return result.scalars().first()
 
 
-async def update_room(session: AsyncSession, message: types.Message):
+async def update_room(session: AsyncSession,
+                      id_room: Room.id,
+                      title_room: Room.name,
+                      description_room: Room.description,
+                      photo_room: Room.photo):
     """Обновление информации по комнате"""
-    query = update(Room).where(Room.name == message.from_user.id).values(
-        user_name=message.from_user.first_name,
-        user_url=message.from_user.url
+    query = update(Room).where(Room.id == id_room).values(
+        name=title_room,
+        description=description_room,
+        photo=photo_room
     )
     await session.execute(query)
     await session.commit()

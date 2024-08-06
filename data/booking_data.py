@@ -35,10 +35,9 @@ async def add_booking(
             status=status
         ))
         await session.commit()
-        logger.info(f"Бронирование добавлено")
+        logger.info("Бронирование добавлено")
     except IntegrityError as error:
-        logger.error(f"Бронирование уже существует")
-        logger.error(error)
+        logger.error("Бронирование уже существует")
         await session.rollback()
 
 

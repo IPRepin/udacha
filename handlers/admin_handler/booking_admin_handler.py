@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from data.booking_data import get_booking_by_params, update_booking_status
 from keyboards.admin_keyboards.booking_admin_keyboards import get_booking_admin_keyboards, send_user_keyboard, \
     add_moderation_keyboard
+from keyboards.admin_keyboards.main_admin_keyboards import get_admin_keyboards
 from utils.states import UserIdState
 from utils.texts import moderator_text
 
@@ -34,7 +35,7 @@ async def next_moderation_questionnaires(message: types.Message,
             await message.answer(moderator_text(booking),
                                  reply_markup=await add_moderation_keyboard())
         else:
-            await message.answer("😎Все заявки проверены!")
+            await message.answer("😎Все заявки проверены!", reply_markup=await get_admin_keyboards())
     except TelegramNetworkError as telegram_err:
         logger.error(telegram_err)
 
@@ -64,3 +65,8 @@ async def moderation_booking(callback_query: types.CallbackQuery,
         await bot.send_message(chat_id=user_id,
                                text="🚫Бронирование отклонено")
         await callback_query.answer()
+
+
+@booking_admin_router.message(F.text == "На главное меню")
+async def go_to_main_menu(message: types.Message):
+    await message.answer("Главное меню", reply_markup=await get_admin_keyboards())

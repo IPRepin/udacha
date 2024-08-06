@@ -27,7 +27,7 @@ class TelegramBotHandler(Handler):
 
 
 def setup_logging():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(encoding='utf-8', level=logging.INFO)
     logs_path = settings.LOGS_PATH
     if not logs_path:
         logs_path = "logs"
@@ -38,7 +38,8 @@ def setup_logging():
     log_file = f"{logs_path}/{dt_now}_bot.log"
     log_handler = RotatingFileHandler(log_file, maxBytes=1e6, backupCount=5)
 
-    formatter = logging.Formatter('%(asctime)s - udacha_bot - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('[%(asctime)s -%(msecs)03d] - udacha_bot - %(name)s - %(levelname)7s - %(message)s')
     log_handler.setFormatter(formatter)
     logging.getLogger().addHandler(log_handler)
     # logging.getLogger().addHandler(TelegramBotHandler())
+

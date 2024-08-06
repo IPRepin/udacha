@@ -1,7 +1,5 @@
-from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_rooms_button() -> InlineKeyboardMarkup:
