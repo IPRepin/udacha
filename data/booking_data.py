@@ -23,22 +23,18 @@ async def add_booking(
         status: str = "❌Не подтверждено"
 ):
     """Создание нового бронирования"""
-    try:
-        session.add(Booking(
-            user_first_name=first_name,
-            user_id=user_id,
-            user_url=user_url,
-            guests=guests,
-            room=room,
-            check_in_date=check_in_date,
-            departure_date=departure_date,
-            status=status
-        ))
-        await session.commit()
-        logger.info("Бронирование добавлено")
-    except IntegrityError as error:
-        logger.error("Бронирование уже существует")
-        await session.rollback()
+    session.add(Booking(
+        user_first_name=first_name,
+        user_id=user_id,
+        user_url=user_url,
+        guests=guests,
+        room=room,
+        check_in_date=check_in_date,
+        departure_date=departure_date,
+        status=status
+    ))
+    await session.commit()
+    logger.info("Бронирование добавлено")
 
 
 async def get_all_bookings(session: AsyncSession):
@@ -63,9 +59,33 @@ async def get_booking_by_params(session: AsyncSession, **kwargs):
     return result.scalars().first()
 
 
-async def update_booking_status(session: AsyncSession, status: str, user_id: Booking):
+async def update_booking_status(session: AsyncSession,
+                                user_id: Booking.user_id,
+                                status: Booking.status
+                                ):
     """Обновление бронирования"""
     query = update(Booking).where(Booking.user_id == user_id).values(
+        status=status
+    )
+    await session.execute(query)
+    await session.commit()
+
+
+async def update_booking(session: AsyncSession,
+                         user_id: Booking,
+                         guests: str,
+                         room: str,
+                         check_in_date: str,
+                         departure_date: str,
+                         status: str = "❌Не подтверждено"
+                         ):
+    """Обновление бронирования"""
+    await session.rollback()
+    query = update(Booking).where(Booking.user_id == user_id).values(
+        guests=guests,
+        room=room,
+        check_in_date=check_in_date,
+        departure_date=departure_date,
         status=status
     )
     await session.execute(query)

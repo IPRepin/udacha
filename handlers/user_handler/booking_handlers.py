@@ -1,8 +1,9 @@
 import logging
 
 import sqlalchemy
+from sqlalchemy.exc import IntegrityError
 
-from data.booking_data import add_booking, get_booking_by_params
+from data.booking_data import add_booking, get_booking_by_params, update_booking
 from data.rooms_data import get_room_by_id
 from keyboards.user_keyboards.main_user_keyboards import get_main_keyboards
 from keyboards.user_keyboards.rooms_keyboards import add_rooms_menu, RoomsKeyboards
@@ -80,13 +81,6 @@ async def select_room(callback_query: types.CallbackQuery,
     await state.update_data(room=room.name)
     data = await state.get_data()
     await state.clear()
-    await callback_query.message.answer(f"{data.get('name')} вы выбрали:\n"
-                                        f"Дата заезда: {data.get('start_date')}\n"
-                                        f"Дата выезда: {data.get('finish_date')}\n"
-                                        f"{data.get('number_guests')} гостей\n"
-                                        f"Выбранный номер:  {data.get('room')}",
-                                        reply_markup=await get_main_keyboards())
-    await callback_query.answer()
     try:
         await add_booking(
             session=session,
@@ -98,10 +92,29 @@ async def select_room(callback_query: types.CallbackQuery,
             check_in_date=data.get('start_date'),
             departure_date=data.get('finish_date'),
         )
-        logger.info("Бронированние завершено")
-    except sqlalchemy.exc.IntegrityError:
-        await callback_query.message.answer("Бронирование изменено")
+        await callback_query.message.answer(f"{data.get('name')} вы выбрали:\n"
+                                            f"Дата заезда: {data.get('start_date')}\n"
+                                            f"Дата выезда: {data.get('finish_date')}\n"
+                                            f"{data.get('number_guests')} гостей\n"
+                                            f"Выбранный номер:  {data.get('room')}",
+                                            reply_markup=await get_main_keyboards())
+        await callback_query.answer()
+    except IntegrityError:
+        logger.info("Бронирование существует")
     # TODO Доработать обновление бронирования
+        await update_booking(session=session,
+                             user_id=data.get("user_id"),
+                             room=data.get('room'),
+                             guests=data.get('number_guests'),
+                             check_in_date=data.get('start_date'),
+                             departure_date=data.get('finish_date'))
+        await callback_query.message.answer(f"{data.get('name')} ваше текущее бронирование:\n"
+                                            f"Дата заезда: {data.get('start_date')}\n"
+                                            f"Дата выезда: {data.get('finish_date')}\n"
+                                            f"{data.get('number_guests')} гостей\n"
+                                            f"Выбранный номер:  {data.get('room')}",
+                                            reply_markup=await get_main_keyboards())
+        await callback_query.answer()
 
 
 @user_handlers_router.message(F.text == "🧳Проверить бронирование")
