@@ -42,16 +42,28 @@ async def add_description_room(message: types.Message, state: FSMContext):
 
 @admin_room_router.message(F.photo, AddRoomsState.photo)
 async def add_photo_room(message: types.Message, state: FSMContext, session: AsyncSession) -> None:
-    await state.update_data(photo=message.photo[-1].file_id)
+    # Получаем текущий список фотографий из состояния или создаём новый, если его нет
     data = await state.get_data()
-    await state.clear()
-    await add_room(
-        title_room=data.get("title"),
-        description_room=data.get("description"),
-        photo_room=data.get("photo"),
-        session=session
-    )
-    await message.answer(f"Номер {data.get('title')} добавлен!", reply_markup=await get_admin_keyboards())
+    photos = data.get("photos", [])
+
+    # Добавляем новое фото в список
+    photos.append(message.photo[-1].file_id)
+
+    # Обновляем данные в состоянии
+    await state.update_data(photos=photos)
+
+    # Если это было последнее фото, завершаем состояние и сохраняем данные
+    if len(photos) >= 3:  # Например, если ожидается 3 фото, проверяем количество
+        await add_room(
+            title_room=data.get("title"),
+            description_room=data.get("description"),
+            photo_room=photos,  # Передаём список фотографий
+            session=session
+        )
+        await state.clear()  # Очищаем состояние
+        await message.answer(f"Номер {data.get('title')} добавлен!", reply_markup=await get_admin_keyboards())
+    else:
+        await message.answer("Добавьте ещё фото или завершите загрузку.")
 
 
 @admin_room_router.message(~F.photo, AddRoomsState.photo)

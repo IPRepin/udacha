@@ -1,7 +1,8 @@
 import logging
 
-import sqlalchemy
 from sqlalchemy.exc import IntegrityError
+
+from datetime import datetime
 
 from data.booking_data import add_booking, get_booking_by_params, update_booking
 from data.rooms_data import get_room_by_id
@@ -25,7 +26,7 @@ async def book_a_room(message: types.Message, state: FSMContext):
     await message.answer("Дата начала поездки:",
                          reply_markup=await DialogCalendar(
                              locale=await get_user_locale(message.from_user)
-                         ).start_calendar())
+                         ).start_calendar(year=datetime.now().year, month=datetime.now().month))
     logger.info("Старт бронироания")
     await state.set_state(BookRoomState.starting_date)
 
@@ -44,7 +45,7 @@ async def add_start_date(callback_query: types.CallbackQuery, callback_data: Cal
         await callback_query.message.answer("Дата окончания поездки:",
                                             reply_markup=await DialogCalendar(
                                                 locale=await get_user_locale(callback_query.from_user)
-                                            ).start_calendar())
+                                            ).start_calendar(year=datetime.now().year, month=datetime.now().month))
 
 
 @user_handlers_router.callback_query(DialogCalendarCallback.filter(), BookRoomState.finishing_date)
@@ -101,7 +102,6 @@ async def select_room(callback_query: types.CallbackQuery,
         await callback_query.answer()
     except IntegrityError:
         logger.info("Бронирование существует")
-    # TODO Доработать обновление бронирования
         await update_booking(session=session,
                              user_id=data.get("user_id"),
                              room=data.get('room'),

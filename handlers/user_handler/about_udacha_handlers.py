@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router, F, types
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +9,7 @@ from keyboards.user_keyboards.rooms_keyboards import info_rooms_menu, InfoRoomsK
 from utils.texts import about_us
 
 about_router = Router()
+logger = logging.getLogger(__name__)
 
 
 @about_router.message(F.text == "👋О гостевом доме УДАЧА")
@@ -27,8 +30,9 @@ async def get_info_rooms(callback_query: types.CallbackQuery, callback_data: Inf
                          session: AsyncSession):
     room_id = int(callback_data.action)
     room = await get_room_by_id(session, room_id)
-    await callback_query.message.answer_photo(photo=room.photo,
-                                              caption=f"{room.name}\n"
-                                                      f"{room.description}",
-                                              reply_markup=await get_back_all_rooms_menu())
+    media_group = [types.InputMediaPhoto(media=photo) for photo in room.photo]
+    await callback_query.message.answer_media_group(media_group)
+    await callback_query.message.answer(f"{room.name}\n"
+                                        f"{room.description}",
+                                        reply_markup=await get_back_all_rooms_menu())
     await callback_query.answer()
