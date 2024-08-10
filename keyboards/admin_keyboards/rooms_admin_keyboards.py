@@ -11,4 +11,7 @@ async def get_rooms_button() -> InlineKeyboardMarkup:
     return keyboard_builder.as_markup()
 
 
-async 
+async def stopping_photo_upload_keyboard() -> InlineKeyboardMarkup:
+    keyboard_builder = InlineKeyboardBuilder()
+    keyboard_builder.button(text="Сохранить номер в базе", callback_data="stop_photo")
+    return keyboard_builder.as_markup()

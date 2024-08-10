@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.rooms_data import add_room
 from keyboards.admin_keyboards.main_admin_keyboards import get_admin_keyboards
-from keyboards.admin_keyboards.rooms_admin_keyboards import get_rooms_button
+from keyboards.admin_keyboards.rooms_admin_keyboards import get_rooms_button, stopping_photo_upload_keyboard
 from utils.states import AddRoomsState
 
 admin_room_router = Router()
@@ -37,7 +37,7 @@ async def add_title_room(message: types.Message, state: FSMContext) -> None:
 async def add_description_room(message: types.Message, state: FSMContext):
     await state.update_data(description=message.text)
     await state.set_state(AddRoomsState.photo)
-    await message.answer("Добавьте фото номера")
+    await message.answer("Добавьте фото номера (до 5 фотографий)")
 
 
 @admin_room_router.message(F.photo, AddRoomsState.photo)
@@ -53,7 +53,7 @@ async def add_photo_room(message: types.Message, state: FSMContext, session: Asy
     await state.update_data(photos=photos)
 
     # Если это было последнее фото, завершаем состояние и сохраняем данные
-    if len(photos) >= 3:  # Например, если ожидается 3 фото, проверяем количество
+    if len(photos) >= 5:  # Например, если ожидается 3 фото, проверяем количество
         await add_room(
             title_room=data.get("title"),
             description_room=data.get("description"),
@@ -63,7 +63,8 @@ async def add_photo_room(message: types.Message, state: FSMContext, session: Asy
         await state.clear()  # Очищаем состояние
         await message.answer(f"Номер {data.get('title')} добавлен!", reply_markup=await get_admin_keyboards())
     else:
-        await message.answer("Добавьте ещё фото или завершите загрузку.")
+        await message.answer("Добавьте ещё фото или завершите добавление номера нажав на кнопку ниже",
+                             reply_markup=await stopping_photo_upload_keyboard())
 
 
 @admin_room_router.message(~F.photo, AddRoomsState.photo)
@@ -72,3 +73,19 @@ async def add_incorrect_photo(message: types.Message, state: FSMContext) -> None
         f"{message.from_user.first_name}\n"
         "Нужно загрузить фотографию!"
     )
+
+
+@admin_room_router.callback_query(F.data == "stop_photo")
+async def stopping_photo_upload(callback_data: types.CallbackQuery, state: FSMContext, session: AsyncSession) -> None:
+    data = await state.get_data()
+    photos = data.get("photos", [])
+    await add_room(
+        title_room=data.get("title"),
+        description_room=data.get("description"),
+        photo_room=photos,  # Передаём список фотографий
+        session=session
+    )
+    await state.clear()  # Очищаем состояние
+    await callback_data.message.answer(f"Номер {data.get('title')} добавлен!",
+                                       reply_markup=await get_admin_keyboards())
+    await callback_data.answer()
