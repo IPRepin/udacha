@@ -18,6 +18,8 @@ from handlers.user_handler.booking_handlers import user_handlers_router
 from utils.commands import register_commands
 from utils.logger_settings import setup_logging
 from middleware.db_middlewares import DataBaseMiddleware
+from utils.notifications import send_notification
+from utils.scheduler import NotificationScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,11 @@ async def connect_bot():
         edit_room_router,
     )
     dp.update.middleware(DataBaseMiddleware(session_pool=session_factory))
+    
+    # Инициализация и запуск планировщика уведомлений
+    scheduler = NotificationScheduler(bot, session_factory)
+    await scheduler.start()
+    
     await create_db()
     try:
         await bot.delete_webhook(drop_pending_updates=True)
@@ -45,6 +52,7 @@ async def connect_bot():
     except TelegramNetworkError as error:
         logger.error(error)
     finally:
+        await scheduler.stop()  # Остановка планировщика при завершении работы бота
         await bot.close()
 
 
